@@ -66,16 +66,15 @@ fn get_i64(message: &str) -> i64 {
     input.trim().parse::<i64>().unwrap()
 }
 
-fn format_money(balance_minor_units: i64) -> String {
+fn format_money(balance_minor_units: i64, currency_code: &str) -> String {
     let major = balance_minor_units / 100;
     let minor = balance_minor_units % 100;
 
-    format!("{}.{:02}", major, minor)
+    format!("{} {}.{:02}", currency_code, major, minor)
 }
 
 fn menu() -> u32 {
     println!("{MENU}");
-
     get_u32("Enter Choice: ")
 }
 
@@ -114,7 +113,20 @@ impl Bank {
     }
 
     fn find_account(&self) {
-        // Placeholder
+        let account_number = get_u32("Enter the Account Number: ");
+        match self.accounts.get(&account_number) {
+            Some(account) => {
+                println!("Account Number: {}", account.account_number);
+                println!("Account Holder Name: {}", account.name);
+                println!(
+                    "Account Balance: {}",
+                    format_money(account.balance_minor_units, &account.currency_code,)
+                );
+            }
+            None => {
+                println!(" Account not found!")
+            }
+        }
     }
 
     fn transfer_account(&mut self) {
@@ -132,9 +144,8 @@ impl Bank {
             println!("Account Number: {}", account.account_number);
             println!("Account Name: {}", account.name);
             println!(
-                "Balance: {} {}",
-                account.currency_code,
-                format_money(account.balance_minor_units)
+                "Balance: {}",
+                format_money(account.balance_minor_units, &account.currency_code,)
             );
         }
     }
