@@ -1,7 +1,7 @@
 // TODO: Add a Global Functon which Formats the Money back to it's balance_minor_units instead of storing
-// the stuff in minor units. (1st Priority)
+// the stuff in minor units. (1st Priority) Done
 //
-// TODO: Create the Withdraw Funtion. (2nd Priority)
+// TODO: Create the Withdraw Funtion. (2nd Priority) Done
 //
 // TODO: Add a Thread Sleep Function Gloabally and Use it in the Places where the TUI is screwed and
 // the Words are just coming and going. (3rd Priority)
@@ -162,7 +162,31 @@ impl Bank {
     }
 
     fn withdraw(&mut self) {
-        // Placeholder
+        let account_number: u32 = get_u32("Enter the Account Number: ");
+        match self.accounts.get_mut(&account_number) {
+            Some(account) => {
+                println!("Account Number: {}", account.account_number);
+                println!("Account Holder Name: {}", account.name);
+                println!(
+                    "Account Balance: {}",
+                    format_money(account.balance_minor_units,) //                     format_money(account.balance_minor_units, &account.currency_code,)
+                );
+
+                let withdraw_money =
+                    get_money_minor_units("Enter the Amount of Money (eg: 2.50): ");
+
+                account.balance_minor_units -= withdraw_money;
+
+                println!(
+                    "{} Withdrawn from your Account. Your Total Balance: {}",
+                    withdraw_money,
+                    format_money(account.balance_minor_units)
+                );
+            }
+            None => {
+                println!("Account not found!");
+            }
+        }
     }
 
     fn see_balance(&self) {
