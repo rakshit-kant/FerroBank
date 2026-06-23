@@ -1,6 +1,8 @@
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::io;
 use std::str::FromStr;
 use std::thread;
@@ -19,12 +21,14 @@ Welcome to Banking Account System!
 8. Exit the Program
 ";
 
+#[derive(Serialize, Deserialize)]
 struct Account {
     account_number: u32,
     name: String,
     balance_minor_units: i64,
 }
 
+#[derive(Serialize, Deserialize)]
 struct Bank {
     accounts: HashMap<u32, Account>,
     next_id: u32,
@@ -195,10 +199,12 @@ impl Bank {
 
         if !self.accounts.contains_key(&sender_account_number) {
             println!("Sender Account not Found!");
+            return;
         }
 
-        if !self.accounts.contains_key(&sender_account_number) {
-            println!("Sender Account not Found!");
+        if !self.accounts.contains_key(&receiver_account_number) {
+            println!("Receiver Account not Found!");
+            return;
         }
 
         {
@@ -206,6 +212,7 @@ impl Bank {
 
             if sender.balance_minor_units < transfer_amount {
                 println!("Insufficient Funds!");
+                return;
             }
 
             sender.balance_minor_units -= transfer_amount;
@@ -235,11 +242,24 @@ impl Bank {
     }
 
     fn batch_save(&self) {
-        // Placeholder
+        let json = serde_json::to_string_pretty(self).expect("Failed to Serialize Data");
+
+        fs::write("ferrobank.json", json).expect("Failed to Save Data");
+
+        println!("Data Saved");
     }
 
-    fn reload_save(&mut self) {
-        // Placeholder
+    fn reload_save() -> Self {
+        match fs::read_to_string("ferrobank.json") {
+            Ok(json) => serde_json::from_str(&json).expect("Corrupted Save File")
+        
+
+            Err(_) => {
+                println!("No Save File Found!");
+
+                Self::new()
+            }
+        }
     }
 
     fn new() -> Self {
@@ -253,7 +273,7 @@ impl Bank {
 fn main() {
     println!("Hello There! FerroBank Active");
 
-    let mut bank: Bank = Bank::new();
+    let mut bank: Bank = Bank::reload_save();
 
     loop {
         let choice: u32 = menu();
@@ -287,6 +307,7 @@ fn main() {
             }
 
             8 => {
+                bank.batch_save();
                 return;
             }
 
