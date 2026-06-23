@@ -251,8 +251,7 @@ impl Bank {
 
     fn reload_save() -> Self {
         match fs::read_to_string("ferrobank.json") {
-            Ok(json) => serde_json::from_str(&json).expect("Corrupted Save File")
-        
+            Ok(json) => serde_json::from_str(&json).expect("Corrupted Save File"),
 
             Err(_) => {
                 println!("No Save File Found!");
