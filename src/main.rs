@@ -1,13 +1,3 @@
-// TODO: Add a Global Functon which Formats the Money back to it's balance_minor_units instead of storing
-// the stuff in minor units. (1st Priority) Done
-//
-// TODO: Create the Withdraw Funtion. (2nd Priority) Done
-//
-// TODO: Add a Thread Sleep Function Gloabally and Use it in the Places where the TUI is screwed and
-// the Words are just coming and going. (3rd Priority)
-//
-// TODO: Polish the Whole TUI. (4th Priority)
-
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use std::collections::HashMap;
@@ -33,15 +23,12 @@ struct Account {
     account_number: u32,
     name: String,
     balance_minor_units: i64,
-    //    currency_code: String,
 }
 
 struct Bank {
     accounts: HashMap<u32, Account>,
     next_id: u32,
 }
-
-// struct Branches {}
 
 fn prompt(message: &str) -> String {
     println!("{}", message);
@@ -51,6 +38,7 @@ fn prompt(message: &str) -> String {
     io::stdin()
         .read_line(&mut input)
         .expect("Failed to read Input");
+    thread::sleep(Duration::from_millis(500));
 
     input.trim().to_string()
 }
@@ -67,28 +55,14 @@ fn get_u32(message: &str) -> u32 {
     input.trim().parse::<u32>().unwrap()
 }
 
-fn get_i64(message: &str) -> i64 {
-    println!("{}", message);
-
-    let mut input: String = String::new();
-
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to Read Input");
-
-    input.trim().parse::<i64>().unwrap()
-}
-
 fn format_money(balance_minor_units: i64) -> String {
-    // fn format_money(balance_minor_units: i64, currency_code: &str) -> String {
-
     let major = balance_minor_units / 100;
     let minor = balance_minor_units % 100;
 
-    format!("{}.{:02}", major, minor) //     format!("{} {}.{:02}", currency_code, major, minor)
+    format!("{}.{:02}", major, minor)
 }
 
-fn get_money_minor_units(message: &str) -> i64 {
+fn get_money_minor_units(_message: &str) -> i64 {
     let input = prompt("Enter the Amount of Money (format: 2.50): ");
 
     let decimal = Decimal::from_str(&input).expect("Invalid Money Amount");
@@ -113,13 +87,11 @@ fn menu() -> u32 {
 impl Bank {
     fn create_account(&mut self) {
         let name = prompt("Enter Account Name: ");
-        let currency_code = prompt("Enter the Currency Code: ");
 
         let account = Account {
             account_number: self.next_id,
             name,
             balance_minor_units: 0,
-            //    currency_code,
         };
 
         self.accounts.insert(self.next_id, account);
@@ -142,7 +114,7 @@ impl Bank {
                 println!("Account Holder Name: {}", account.name);
                 println!(
                     "Account Balance: {}",
-                    format_money(account.balance_minor_units,) //                     format_money(account.balance_minor_units, &account.currency_code,)
+                    format_money(account.balance_minor_units,)
                 );
 
                 let deposit_money = get_money_minor_units("Enter the Amount of Money (eg: 2.50): ");
@@ -169,11 +141,16 @@ impl Bank {
                 println!("Account Holder Name: {}", account.name);
                 println!(
                     "Account Balance: {}",
-                    format_money(account.balance_minor_units,) //                     format_money(account.balance_minor_units, &account.currency_code,)
+                    format_money(account.balance_minor_units,)
                 );
 
                 let withdraw_money =
                     get_money_minor_units("Enter the Amount of Money (eg: 2.50): ");
+
+                if withdraw_money > account.balance_minor_units {
+                    println!("Insufficient Funds!");
+                    return;
+                }
 
                 account.balance_minor_units -= withdraw_money;
 
@@ -189,22 +166,6 @@ impl Bank {
         }
     }
 
-    fn see_balance(&self) {
-        // Placeholder
-    }
-
-    //   fn get_account_mut(&mut self) {
-    //        let account_number: u32 = get_u32("Enter the Account Number: ");
-    //        match self.accounts.get_mut(&account_number) {
-    //            Some(account) => {}
-    //            None => {
-    //                println!("Account Not Found!")
-    //            }
-    //        }
-    //    }
-    //    Commented Just Because I wanted to see if I really need Abstraction instead of
-    //    Repetition
-
     fn find_account(&self) {
         let account_number: u32 = get_u32("Enter the Account Number: ");
         match self.accounts.get(&account_number) {
@@ -213,7 +174,7 @@ impl Bank {
                 println!("Account Holder Name: {}", account.name);
                 println!(
                     "Account Balance: {}",
-                    format_money(account.balance_minor_units,) //                     format_money(account.balance_minor_units, &account.currency_code,)
+                    format_money(account.balance_minor_units,)
                 );
             }
             None => {
@@ -223,7 +184,40 @@ impl Bank {
     }
 
     fn transfer_account(&mut self) {
-        // Placeholder
+        let sender_account_number = get_u32("Enter the Sender's Account Number: ");
+        let receiver_account_number = get_u32("Enter the Receiver's Account Number: ");
+        let transfer_amount = get_money_minor_units("Enter the Transfer Amount(eg: 2.50): ");
+
+        if sender_account_number == receiver_account_number {
+            println!("Cannot Transfer to the Same Account!");
+            return;
+        }
+
+        if !self.accounts.contains_key(&sender_account_number) {
+            println!("Sender Account not Found!");
+        }
+
+        if !self.accounts.contains_key(&sender_account_number) {
+            println!("Sender Account not Found!");
+        }
+
+        {
+            let sender = self.accounts.get_mut(&sender_account_number).unwrap();
+
+            if sender.balance_minor_units < transfer_amount {
+                println!("Insufficient Funds!");
+            }
+
+            sender.balance_minor_units -= transfer_amount;
+        }
+
+        {
+            let receiver = self.accounts.get_mut(&receiver_account_number).unwrap();
+
+            receiver.balance_minor_units += transfer_amount;
+        }
+
+        println!("Successfully transferred {}", format_money(transfer_amount));
     }
 
     fn list_accounts(&self) {
@@ -236,10 +230,7 @@ impl Bank {
             println!("---------------");
             println!("Account Number: {}", account.account_number);
             println!("Account Name: {}", account.name);
-            println!(
-                "Balance: {}",
-                format_money(account.balance_minor_units,) //                 format_money(account.balance_minor_units, &account.currency_code,)
-            );
+            println!("Balance: {}", format_money(account.balance_minor_units,));
         }
     }
 
@@ -301,12 +292,6 @@ fn main() {
 
             _ => {
                 println!("Bro! You had to choose from 1 to 8... Still you couldn't do it...");
-                println!("Loading the Menu Again");
-
-                for _ in 0..3 {
-                    print!(".");
-                    thread::sleep(Duration::from_secs(1));
-                }
             }
         }
     }
