@@ -14,7 +14,7 @@ A simple banking system written in Rust for learning systems programming, data s
 
 ## Project Goals
 
-FerroBank is a learning project focused on:
+FerroBank is a learning project on these stuff:
 
 - Rust fundamentals
 - Structs and methods
@@ -40,18 +40,6 @@ Each account stores:
 
 Balances are stored in minor currency units (such as cents or paise) to avoid floating-point precision issues.
 
-## Current Status
-
-This project is actively under development.
-
-Planned additions:
-
-- Persistent storage
-- Better input validation
-- Transaction history
-- Multiple branches
-- Improved error handling
-
 ## License
 
-This project is intended for learning and educational purposes.
+MIT
