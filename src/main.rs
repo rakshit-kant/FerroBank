@@ -48,15 +48,23 @@ fn prompt(message: &str) -> String {
 }
 
 fn get_u32(message: &str) -> u32 {
-    println!("{}", message);
+    loop {
+        println!("{}", message);
 
-    let mut input: String = String::new();
+        let mut input = String::new();
 
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to Read Input");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to Read Input");
 
-    input.trim().parse::<u32>().unwrap()
+        match input.trim().parse::<u32>() {
+            Ok(number) => return number,
+
+            Err(_) => {
+                println!("Please enter a valid positive integer!");
+            }
+        }
+    }
 }
 
 fn format_money(balance_minor_units: i64) -> String {
@@ -67,20 +75,30 @@ fn format_money(balance_minor_units: i64) -> String {
 }
 
 fn get_money_minor_units(_message: &str) -> i64 {
-    let input = prompt("Enter the Amount of Money (format: 2.50): ");
+    loop {
+        let input = prompt("Enter the Amount of Money (format: 2.50): ");
 
-    let decimal = Decimal::from_str(&input).expect("Invalid Money Amount");
+        let decimal = match Decimal::from_str(&input) {
+            Ok(decimal) => decimal,
 
-    let minor_units = (decimal * Decimal::new(100, 0))
-        .round()
-        .to_i64()
-        .expect("Amount Too Large");
+            Err(_) => {
+                println!("Invalid Money Amount!");
+                continue;
+            }
+        };
 
-    if minor_units < 1 {
-        println!("Amount too Low!");
+        let minor_units = (decimal * Decimal::new(100, 0))
+            .round()
+            .to_i64()
+            .expect("Amount Too Large");
+
+        if minor_units < 1 {
+            println!("Amount too Low!");
+            continue;
+        }
+
+        return minor_units;
     }
-
-    minor_units
 }
 
 fn menu() -> u32 {
@@ -107,7 +125,21 @@ impl Bank {
     }
 
     fn delete_account(&mut self) {
-        // Placeholder
+        let account_number: u32 = get_u32("Enter the Account Number: ");
+        match self.accounts.remove(&account_number) {
+            Some(account) => {
+                println!("Account Number: {}", account.account_number);
+                println!("Account Holder Name: {}", account.name);
+                println!(
+                    "Account Balance: {}",
+                    format_money(account.balance_minor_units,)
+                );
+                println!("Account Deleted!");
+            }
+            None => {
+                println!("Account not found!");
+            }
+        }
     }
 
     fn deposit(&mut self) {
@@ -127,7 +159,7 @@ impl Bank {
 
                 println!(
                     "Added {} to your Account. Your Total Balance: {}",
-                    deposit_money,
+                    format_money(deposit_money),
                     format_money(account.balance_minor_units)
                 );
             }
